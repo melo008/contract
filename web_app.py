@@ -23,8 +23,8 @@ def get_short_url(long_url):
 
 # 網頁基本設定
 st.set_page_config(page_title="內政部租賃合約線上簽署系統", layout="wide")
-st.title("🏠 住宅租賃契約書 - 線上合約簽署系統")
-st.write("【房東專區】：填完資料並手寫簽名後，點擊底部產生『乾淨縮網址』傳給房客（房客完全免登入）。")
+st.title(" 住宅租賃契約書 - 線上合約簽署系統")
+st.write("【房東專區】：填完資料並手寫簽名後，點擊底部產生『乾淨縮網址』傳給房客。")
 
 # 讀取網址上的參數
 query_params = st.query_params

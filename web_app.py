@@ -1,5 +1,7 @@
 import os
 import urllib.parse
+import io
+import base64
 import streamlit as st
 from streamlit_drawable_canvas import st_canvas
 from datetime import datetime
@@ -22,7 +24,7 @@ def get_short_url(long_url):
 # 網頁基本設定
 st.set_page_config(page_title="內政部租賃合約線上簽署系統", layout="wide")
 st.title("🏠 住宅租賃契約書 - 線上合約簽署系統")
-st.write("【房東專區】：填完合約細節後，點擊底部即可生成『極精簡短網址』傳給房客，房客免註冊登入即可補簽。")
+st.write("【房東專區】：填完合約細節並手寫簽名後，點擊底部即可生成『極精簡短網址』傳給房客，房客免註冊登入即可補簽。")
 
 query_params = st.query_params
 def get_param(key, default=""):
@@ -60,7 +62,7 @@ with col1:
 # 2. 租賃期間費用約定
 with col2:
     st.header("2. 租賃期間費用約定")
-    mgmt_pay = st.radio("管理費負擔方", ["出租人負擔", "承租人負擔", "其他約定"], index=0, key="mgmt")
+    mgmt_pay = st.radio("管理費負擔方", ["出租人負擔", "承租人負擔", "開約定"], index=0, key="mgmt")
     fee_mgmt_house = st.text_input("住宅管理費/月 (元)", value="0")
     fee_mgmt_car = st.text_input("車位管理費/月 (元)", value="0")
     txt_mgmt_other = st.text_input("管理費其他約定說明")
@@ -126,7 +128,11 @@ b_col1, b_col2 = st.columns(2)
 with b_col1:
     st.subheader("【房東步驟 1】：產生專屬短網址")
     if st.button("🔗 一鍵生成房客簽名連結", use_container_width=True):
-        # 進行參數精簡，100% 根除網頁 414 報錯
+        # 【智慧暫存】：房東點擊生成網址時，先把房東簽名圖片暫存到伺服器空間，解決 414 報錯
+        if canvas_l.image_data is not None and canvas_l.image_data.any():
+            Image.fromarray(canvas_l.image_data.astype('uint8'), 'RGBA').save("landlord_last_sign.png")
+            
+        # 精簡參數打包，100% 根除 414 錯誤
         params = {
             "l_name": landlord_name, 
             "t_name": tenant_name, 
@@ -134,9 +140,7 @@ with b_col1:
             "rent": rent_amount
         }
         encoded_params = urllib.parse.urlencode(params)
-        
-        # 【核心修正】：精準使用您所提供的正式線上網址，保證絕不拼錯！
-        raw_long_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app/?{encoded_params}"
+        raw_long_url = f"https://streamlit.app?{encoded_params}"
         
         with st.spinner("正在為您進行網址精簡縮短..."):
             short_url = get_short_url(raw_long_url)
@@ -182,14 +186,22 @@ with b_col2:
                         st.error("找不到 template.docx 檔案！")
                     else:
                         doc = DocxTemplate("template.docx")
+                        
+                        # 【雙軌合體核心】：檢查當下有沒有新簽名，如果沒有，自動調取剛才房東存在雲端的簽名檔
                         if canvas_l.image_data is not None and canvas_l.image_data.any():
                             Image.fromarray(canvas_l.image_data.astype('uint8'), 'RGBA').save("wl.png")
                             context["landlord_sign"] = InlineImage(doc, "wl.png", width=Inches(1.2))
-                        else: context["landlord_sign"] = ""
+                        elif os.path.exists("landlord_last_sign.png"):
+                            context["landlord_sign"] = InlineImage(doc, "landlord_last_sign.png", width=Inches(1.2))
+                        else:
+                            context["landlord_sign"] = ""
+                            
+                        # 處理承租人（房客）簽名
                         if canvas_t.image_data is not None and canvas_t.image_data.any():
                             Image.fromarray(canvas_t.image_data.astype('uint8'), 'RGBA').save("wt.png")
                             context["tenant_sign"] = InlineImage(doc, "wt.png", width=Inches(1.2))
-                        else: context["tenant_sign"] = ""
+                        else:
+                            context["tenant_sign"] = ""
 
                         time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
                         out_word = f"住宅租賃契約書_{tenant_name}_{time_str}.docx"

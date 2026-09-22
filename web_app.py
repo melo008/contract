@@ -178,7 +178,7 @@ with b_col1:
         safe_b64_str = base64.urlsafe_b64encode(compressed_bytes).decode("utf-8")
         
         # 【終極修復校正】：一字不差固定拼裝公式，100% 絕不重疊黏貼，且內建標準半形問號 `?p=`
-        share_url = f"https://streamlit.app{safe_b64_str}"
+        share_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app/{safe_b64_str}"
         
         st.success("🎉 全資料同步網址生成成功！請點擊下方代碼框右上角的『Copy』一鍵複製傳給房客（傳 Line 100% 免登入、全欄位自動打勾帶入）：")
         st.code(share_url, language="text")

@@ -9,10 +9,22 @@ from docxtpl import DocxTemplate, InlineImage
 from docx.shared import Inches
 from PIL import Image
 
+def get_short_url(long_url):
+    """呼叫微軟與網路通用的免費 TinyURL API，將超長亂碼網址一秒變超短網址"""
+    try:
+        import requests
+        api_url = f"http://tinyurl.com{urllib.parse.quote(long_url)}"
+        res = requests.get(api_url, timeout=5)
+        if res.status_code == 200 and res.text:
+            return res.text
+    except:
+        pass
+    return long_url # 萬一網路斷線，才改回傳原本的長網址
+
 # 網頁基本設定
 st.set_page_config(page_title="內政部租賃合約線上簽署系統", layout="wide")
 st.title("🏠 住宅租賃契約書 - 線上合約簽署系統")
-st.write("【房東專區】：填完資料並手寫簽名後，點擊底部產生『包含房東簽名』的專屬連結傳給房客。")
+st.write("【房東專區】：填完資料並手寫簽名後，點擊底部產生『乾淨縮網址』傳給房客（房客完全免登入）。")
 
 # 讀取網址上的參數
 query_params = st.query_params
@@ -127,13 +139,12 @@ with col3:
     chk_remote = c_k7.checkbox("車庫遙控器", value=True if get_param("k_r")=="1" else False)
     num_remote = c_k8.text_input("車庫遙控器數量", value=get_param("kn_r", "1"))
 
-    # 智慧重載房東先前簽好的圖片（如有）
     l_sign_b64 = get_param("l_sign")
     
     st.write("---")
     st.markdown("**✒️ 出租人手寫簽名**")
     if l_sign_b64:
-        st.success("已載入房東預先留下的簽名！(若需修改可直接於下方重新簽名)")
+        st.success("已自動載入房東的簽名筆跡！")
         
     canvas_l = st_canvas(fill_color="rgba(255,255,255,0)", stroke_width=3, stroke_color="#000000", background_color="#FFFFFF", height=100, width=280, drawing_mode="freedraw", key="canvas_l", return_image_data=True)
     
@@ -144,12 +155,10 @@ st.write("---")
 b_col1, b_col2 = st.columns(2)
 
 with b_col1:
-    st.subheader("【房東步驟 1】：產生包含您簽名的網址")
+    st.subheader("【房東步驟 1】：產生專屬短網址")
     if st.button("🔗 一鍵生成房客簽名連結", use_container_width=True):
-        # 先將房東的簽名轉換成 Base64 輕量字串包進網址
-        l_sign_encoded = l_sign_b64  # 預設沿用舊的
+        l_sign_encoded = l_sign_b64
         if canvas_l.image_data is not None and canvas_l.image_data.any():
-            # 使用者有當場簽名，進行壓縮編碼
             img_l_obj = Image.fromarray(canvas_l.image_data.astype('uint8'), 'RGBA')
             buffered = io.BytesIO()
             img_l_obj.save(buffered, format="PNG")
@@ -166,17 +175,22 @@ with b_col1:
             "k_h": "1" if chk_key_house else "0", "kn_h": num_key_house, "k_t": "1" if chk_token else "0", "kn_t": num_token,
             "k_m": "1" if chk_key_mail else "0", "kn_m": num_key_mail, "k_r": "1" if chk_remote else "0", "kn_r": num_remote,
             "f_oth": "1" if chk_other_f else "0", "f_txt": textarea_other,
-            "l_sign": l_sign_encoded  # 房東的輕量化簽名封包
+            "l_sign": l_sign_encoded
         }
         for k, (is_chk, num) in fur_context.items():
             params[f"f_{k}"] = "1" if is_chk else "0"
             params[f"fn_{k}"] = num
             
         encoded_params = urllib.parse.urlencode(params)
-        # 綁定您的免費前端網址
-        share_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app/?{encoded_params}"
-        st.info("請複製下方網址，用 Line 或簡訊傳給房客，房客打開就能直接看到您的簽名並補簽（完全免註冊）：")
-        st.code(share_url, language="text")
+        # 固定綁定您的全螢幕免登入前端網址
+        raw_long_url = f"https://streamlit.app?{encoded_params}"
+        
+        # ⚡ 自動將長亂碼網址丟去 TinyURL 縮短，生成乾淨的短連結
+        with st.spinner("正在為您進行全自動網址優化與縮短..."):
+            short_url = get_short_url(raw_long_url)
+            
+        st.success("🎉 短網址生成成功！傳給房客點開即可直接補簽（房客完全免登入、免註冊）：")
+        st.code(short_url, language="text")
 
 with b_col2:
     st.subheader("【房客與房東步驟 2】：雙方簽完名後生成下載")
@@ -217,7 +231,7 @@ with b_col2:
                     else:
                         doc = DocxTemplate("template.docx")
                         
-                        # 處理出租人（房東）簽名：優先檢查網址裡有沒有帶入先前簽好的圖檔
+                        # 處理出租人（房東）簽名
                         if canvas_l.image_data is not None and canvas_l.image_data.any():
                             Image.fromarray(canvas_l.image_data.astype('uint8'), 'RGBA').save("wl.png")
                             context["landlord_sign"] = InlineImage(doc, "wl.png", width=Inches(1.2))

@@ -26,7 +26,7 @@ def get_short_url(long_url):
         pass
     return long_url
 
-# 【核心修正】：使用 Streamlit 官方新版規範字典解碼，確保房客點開時資料 100% 帶入
+# 【黃金校正】：新版 Streamlit 網址參數讀取，並確保回傳乾淨的字串
 def get_param(key, default=""):
     try:
         if key in st.query_params:
@@ -41,6 +41,7 @@ col1, col2, col3 = st.columns(3)
 # 1. 基本與租期資料
 with col1:
     st.header("1. 基本與租期資料")
+    # 【精準對齊】：value 綁定的 get_param 參數名稱必須與下方打包的 params 鍵名完全一模一樣！
     landlord_name = st.text_input("出租人姓名 *", value=get_param("l_name"))
     tenant_name = st.text_input("承租人姓名 *", value=get_param("t_name"))
     tenant_id = st.text_input("承租人身分證字號")
@@ -136,6 +137,7 @@ with b_col1:
         if canvas_l.image_data is not None and canvas_l.image_data.any():
             Image.fromarray(canvas_l.image_data.astype('uint8'), 'RGBA').save("landlord_last_sign.png")
             
+        # 打包精簡參數，並與第一段的 get_param 鍵名做到 100% 完全相同
         params = {
             "l_name": landlord_name, 
             "t_name": tenant_name, 
@@ -143,7 +145,9 @@ with b_col1:
             "rent": rent_amount
         }
         encoded_params = urllib.parse.urlencode(params)
-        raw_long_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app/{encoded_params}"
+        
+        # 精準綁定您的專屬線上網址連結，確保房客開啟不迷路
+        raw_long_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app/?{encoded_params}"
         
         with st.spinner("正在為您進行網址精簡縮短..."):
             short_url = get_short_url(raw_long_url)
@@ -190,6 +194,7 @@ with b_col2:
                     else:
                         doc = DocxTemplate("template.docx")
                         
+                        # 處理出租人（房東）簽名
                         if canvas_l.image_data is not None and canvas_l.image_data.any():
                             Image.fromarray(canvas_l.image_data.astype('uint8'), 'RGBA').save("wl.png")
                             context["landlord_sign"] = InlineImage(doc, "wl.png", width=Inches(1.2))
@@ -198,6 +203,7 @@ with b_col2:
                         else:
                             context["landlord_sign"] = ""
                             
+                        # 處理承租人（房客）簽名
                         if canvas_t.image_data is not None and canvas_t.image_data.any():
                             Image.fromarray(canvas_t.image_data.astype('uint8'), 'RGBA').save("wt.png")
                             context["tenant_sign"] = InlineImage(doc, "wt.png", width=Inches(1.2))

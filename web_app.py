@@ -1,4 +1,4 @@
-import pythoncom
+
 import os
 import urllib.parse
 import streamlit as st
@@ -6,7 +6,7 @@ from streamlit_drawable_canvas import st_canvas
 from datetime import datetime
 from docxtpl import DocxTemplate, InlineImage
 from docx.shared import Inches
-from docx2pdf import convert
+
 from PIL import Image
 
 # 網頁基本設定

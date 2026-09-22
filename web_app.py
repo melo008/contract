@@ -23,22 +23,31 @@ FURNITURE_ITEMS = [
     ("sink", "洗手台"), ("shower", "蓮蓬頭")
 ]
 
-# 【核心進化：全自動二進位解碼】從網址解壓出幾十個欄位的完整狀態
+# 【終極修正核心：新版網址二進位解碼與串列去殼】
 decoded_data = {}
-compressed_packet = st.query_params.get("p", "")
-if compressed_packet:
-    try:
-        # 將網址上的安全字串還原並進行 zlib 解壓縮
-        raw_bytes = base64.urlsafe_b64decode(compressed_packet.encode("utf-8"))
-        decompressed_str = zlib.decompress(raw_bytes).decode("utf-8")
-        decoded_data = urllib.parse.parse_qs(decompressed_str)
-    except:
-        pass
+# 相容新舊版 Streamlit query_params 讀取方式
+try:
+    if "p" in st.query_params:
+        compressed_packet = st.query_params["p"]
+        # 2026新版防呆：若被包成 List 則強行取出第一個物件
+        if isinstance(compressed_packet, list):
+            compressed_packet = compressed_packet[0]
+            
+        if compressed_packet:
+            raw_bytes = base64.urlsafe_b64decode(compressed_packet.encode("utf-8"))
+            decompressed_str = zlib.decompress(raw_bytes).decode("utf-8")
+            decoded_data = urllib.parse.parse_qs(decompressed_str)
+except:
+    pass
 
 def get_p(key, default=""):
-    """安全讀取解壓後資料的輔助工具"""
+    """高階字串清洗工具：從網址還原出絕對乾淨的純文字，防止 List 鎖死導致空白"""
     if key in decoded_data and decoded_data[key]:
-        return decoded_data[key][0]
+        val = decoded_data[key]
+        # parse_qs 預設會把值包在 list 裡，我們必須強行去殼解包取出純文字
+        if isinstance(val, list):
+            val = val[0]
+        return str(val).strip()
     return default
 
 # ==================== 建立網頁左、中、右三欄版面 ====================
@@ -165,15 +174,15 @@ with b_col1:
             payload[f"f_{k}"] = "1" if is_chk else "0"
             payload[f"fn_{k}"] = num
             
-        # 【黑科技核心】：將幾千字的字串轉化為二進位，並用 zlib + urlsafe_b64 壓縮成一小串輕量密碼
+        # 二進位智慧深度壓縮
         raw_query_str = urllib.parse.urlencode(payload)
         compressed_bytes = zlib.compress(raw_query_str.encode("utf-8"))
         safe_b64_str = base64.urlsafe_b64encode(compressed_bytes).decode("utf-8")
         
-        # 拼接在你的專屬正式網址後方（網址體積縮小 80%，保證絕對不碎裂）
-        share_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app/{safe_b64_str}"
+        # 綁定您的免費前端專屬網址
+        share_url = f"https://streamlit.app{safe_b64_str}"
         
-        st.success("🎉 全資料同步網址壓縮成功！請點擊複製下方方塊內文字傳給房客（傳 Line 絕不碎裂、100% 開啟、免登入）：")
+        st.success("🎉 全資料同步網址優化成功！請複製下方代碼方塊內的網址傳給房客：")
         st.code(share_url, language="text")
 
 with b_col2:

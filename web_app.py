@@ -161,7 +161,7 @@ with b_col1:
             
         # 串接目前的網頁基礎網址
         encoded_params = urllib.parse.urlencode(params)
-        share_url = f"https://streamlit.app?{encoded_params}" # 注意：上線後換成你的免費網址！
+        share_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app/{encoded_params}" # 注意：上線後換成你的免費網址！
         st.info("請複製下方網址，用 Line 或簡訊傳給房客，房客打開就能直接簽名：")
         st.code(share_url, language="text")
 

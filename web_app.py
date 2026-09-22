@@ -159,29 +159,15 @@ with b_col1:
             params[f"f_{k}"] = "1" if is_chk else "0"
             params[f"fn_{k}"] = num
             
-             # 串接目前的網頁基礎網址
+                 # 串接目前的網頁基礎網址
         encoded_params = urllib.parse.urlencode(params)
         
-        # 【核心修正】：自動將房東的 share.streamlit.io 管理後台網址，精準置換成房客專用的「免登入公開網址」
-        current_url = st.nav_ctx.get_current_url() if hasattr(st, "nav_ctx") else ""
-        if "share.streamlit.io" in current_url:
-            # 房東如果在管理後台點擊，程式會自動拆解並組裝成獨立全螢幕免登入網址
-            try:
-                parts = current_url.split("share.streamlit.io/")[-1].split("/")
-                user = parts[0]
-                repo = parts[1]
-                # 標準官方格式：https://streamlit.app
-                public_base = f"https://{user}-{repo}.streamlit.app"
-            except:
-                public_base = "https://streamlit.app"
-        else:
-            # 如果已經是標準公開網址，就直接用當前網址
-            public_base = current_url.split("?")[0] if current_url else "https://streamlit.app"
-            
-        share_url = f"{public_base}/?{encoded_params}"
+        # 【精準填入你的專屬網址】：直接綁定你的前端免登入網址，防客點開100%免註冊免登入
+        share_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app/?{encoded_params}"
         
         st.info("請複製下方網址，用 Line 或簡訊傳給房客，房客打開就能直接簽名（完全免註冊、免登入）：")
         st.code(share_url, language="text")
+
 )
 
 with b_col2:

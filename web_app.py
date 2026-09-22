@@ -9,8 +9,13 @@ from docxtpl import DocxTemplate, InlineImage
 from docx.shared import Inches
 from PIL import Image
 
+# 網頁基本設定
+st.set_page_config(page_title="內政部租賃合約線上簽署系統", layout="wide")
+st.title("🏠 住宅租賃契約書 - 線上合約簽署系統")
+st.write("【房東專區】：填完合約細節並手寫簽名後，點擊底部即可生成『極精簡短網址』傳給房客，房客免註冊登入即可補簽。")
+
 def get_short_url(long_url):
-    """呼叫網路通用的免費 TinyURL API，將長亂碼網址一秒變超短網址"""
+    """呼叫網路通用的免費 TinyURL API"""
     try:
         import requests
         api_url = f"http://tinyurl.com{urllib.parse.quote(long_url)}"
@@ -21,14 +26,14 @@ def get_short_url(long_url):
         pass
     return long_url
 
-# 網頁基本設定
-st.set_page_config(page_title="內政部租賃合約線上簽署系統", layout="wide")
-st.title("🏠 住宅租賃契約書 - 線上合約簽署系統")
-st.write("【房東專區】：填完合約細節並手寫簽名後，點擊底部即可生成『極精簡短網址』傳給房客，房客免註冊登入即可補簽。")
-
-query_params = st.query_params
+# 【核心修正】：使用 Streamlit 官方新版規範字典解碼，確保房客點開時資料 100% 帶入
 def get_param(key, default=""):
-    return query_params.get(key, default)
+    try:
+        if key in st.query_params:
+            return st.query_params[key]
+    except:
+        pass
+    return default
 
 # ==================== 建立網頁左、中、右三欄版面 ====================
 col1, col2, col3 = st.columns(3)
@@ -128,11 +133,9 @@ b_col1, b_col2 = st.columns(2)
 with b_col1:
     st.subheader("【房東步驟 1】：產生專屬短網址")
     if st.button("🔗 一鍵生成房客簽名連結", use_container_width=True):
-        # 【智慧暫存】：房東點擊生成網址時，先把房東簽名圖片暫存到伺服器空間，解決 414 報錯
         if canvas_l.image_data is not None and canvas_l.image_data.any():
             Image.fromarray(canvas_l.image_data.astype('uint8'), 'RGBA').save("landlord_last_sign.png")
             
-        # 精簡參數打包，100% 根除 414 網址超長錯誤
         params = {
             "l_name": landlord_name, 
             "t_name": tenant_name, 
@@ -140,9 +143,7 @@ with b_col1:
             "rent": rent_amount
         }
         encoded_params = urllib.parse.urlencode(params)
-        
-        # 【專屬網址精準綁定】：直接固定對齊您的正式線上連結，房客點開 100% 免登入免註冊！
-        raw_long_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app/{encoded_params}"
+        raw_long_url = f"https://streamlit.app?{encoded_params}"
         
         with st.spinner("正在為您進行網址精簡縮短..."):
             short_url = get_short_url(raw_long_url)
@@ -189,7 +190,6 @@ with b_col2:
                     else:
                         doc = DocxTemplate("template.docx")
                         
-                        # 【雲端雙軌合體】：優先檢查當下有無新簽名，若無，自動去調取剛才房東留在雲端的暫存簽名檔
                         if canvas_l.image_data is not None and canvas_l.image_data.any():
                             Image.fromarray(canvas_l.image_data.astype('uint8'), 'RGBA').save("wl.png")
                             context["landlord_sign"] = InlineImage(doc, "wl.png", width=Inches(1.2))
@@ -198,7 +198,6 @@ with b_col2:
                         else:
                             context["landlord_sign"] = ""
                             
-                        # 處理承租人（房客）簽名
                         if canvas_t.image_data is not None and canvas_t.image_data.any():
                             Image.fromarray(canvas_t.image_data.astype('uint8'), 'RGBA').save("wt.png")
                             context["tenant_sign"] = InlineImage(doc, "wt.png", width=Inches(1.2))

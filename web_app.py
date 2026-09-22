@@ -31,16 +31,16 @@ try:
         # 2026 最新版 Streamlit 防呆：若參數被意外包成 List，強制取出第一個純字串
         if isinstance(compressed_packet, list):
             compressed_packet = compressed_packet[0]
-            
+
         if compressed_packet:
             raw_bytes = base64.urlsafe_b64decode(compressed_packet.encode("utf-8"))
             decompressed_str = zlib.decompress(raw_bytes).decode("utf-8")
             decoded_data = urllib.parse.parse_qs(decompressed_str)
-except:
+except Exception:
     pass
 
 def get_p(key, default=""):
-    """高階字串還原工具：強制將 List 去殼，還原為乾淨的台灣繁體純文字輸入框數值"""
+    """高階字串還原工具:強制將 List 去殼,還原為乾淨的台灣繁體純文字輸入框數值"""
     if key in decoded_data and decoded_data[key]:
         val = decoded_data[key]
         if isinstance(val, list):
@@ -62,18 +62,18 @@ with col1:
     address = st.text_input("租賃房屋地址 *", value=get_p("addr"))
     rent_amount = st.text_input("每月租金 (元)", value=get_p("rent"))
     deposit_amount = st.text_input("押金金額 (元)", value=get_p("dep"))
-    
+
     st.subheader("租期時間")
     c_s1, c_s2, c_s3 = st.columns(3)
     s_year = c_s1.text_input("開始年(民國)", value=get_p("sy", "115"))
     s_month = c_s2.text_input("開始月", value=get_p("sm", "1"))
     s_day = c_s3.text_input("開始日", value=get_p("sd", "1"))
-    
+
     c_e1, c_e2, c_e3 = st.columns(3)
     e_year = c_e1.text_input("結束年(民國)", value=get_p("ey", "116"))
     e_month = c_e2.text_input("結束月", value=get_p("em", "1"))
     e_day = c_e3.text_input("結束日", value=get_p("ed", "1"))
-    
+
     car_idx = 1 if get_p("car") == "yes" else 0
     car_option = st.radio("汽車位需求", ["無汽車位", "有汽車位"], index=car_idx)
     moto_idx = 1 if get_p("moto") == "yes" else 0
@@ -88,23 +88,23 @@ with col2:
     fee_mgmt_house = st.text_input("住宅管理費/月 (元)", value=get_p("m_h", "0"))
     fee_mgmt_car = st.text_input("車位管理費/月 (元)", value=get_p("m_c", "0"))
     txt_mgmt_other = st.text_input("管理費其他約定說明", value=get_p("m_o"))
-    
+
     water_list = ["出租人負擔", "承租人負擔", "其他約定"]
     water_idx = water_list.index(get_p("w_p")) if get_p("w_p") in water_list else 1
     water_pay = st.radio("水費負擔方", water_list, index=water_idx, key="water")
     txt_water_other = st.text_input("水費其他約定說明", value=get_p("w_o"))
-    
+
     elec_list = ["出租人負擔", "承租人負擔 (依當期平均電價)", "承租人負擔 (固定每度元)", "非度數計費其他約定"]
     elec_idx = elec_list.index(get_p("e_p")) if get_p("e_p") in elec_list else 1
     elec_pay = st.radio("電費計費方式", elec_list, index=elec_idx, key="elec")
     fee_elec_rate = st.text_input("固定每度電費 (元)", value=get_p("e_r", "0"))
     txt_elec_other = st.text_input("電費other約定說明", value=get_p("e_o"))
-    
+
     gas_list = ["出租人負擔", "承租人負擔", "其他約定"]
     gas_idx = gas_list.index(get_p("g_p")) if get_p("g_p") in gas_list else 1
     gas_pay = st.radio("瓦斯費負擔方", gas_list, index=gas_idx, key="gas")
     txt_gas_other = st.text_input("瓦斯費其他約定說明", value=get_p("g_o"))
-    
+
     net_list = ["出租人負擔", "承租人負擔", "其他約定"]
     net_idx = net_list.index(get_p("n_p")) if get_p("n_p") in net_list else 0
     net_pay = st.radio("網路費負擔方", net_list, index=net_idx, key="net")
@@ -123,26 +123,26 @@ with col3:
             is_checked = c_f1.checkbox(name, value=default_chk, key=f"cb_{key}")
             num = c_f2.text_input("數量", value=get_p(f"fn_{key}", "1"), key=f"num_{key}")
             fur_context[key] = (is_checked, num)
-            
-    chk_other_f = st.checkbox("其他自訂設備", value=True if get_p("f_oth")=="1" else False)
+
+    chk_other_f = st.checkbox("其他自訂設備", value=True if get_p("f_oth") == "1" else False)
     textarea_other = st.text_area("請輸入自訂家具備註", value=get_p("f_txt"), height=60)
 
     st.write("---")
     st.markdown("**🔑 承租人點收物品**")
     c_k1, c_k2 = st.columns(2)
-    chk_key_house = c_k1.checkbox("房屋鑰匙", value=True if get_p("k_h")=="1" else False)
+    chk_key_house = c_k1.checkbox("房屋鑰匙", value=True if get_p("k_h") == "1" else False)
     num_key_house = c_k2.text_input("房屋鑰匙數量", value=get_p("kn_h", "1"))
-    chk_token = c_k1.checkbox("感應磁扣(卡)", value=True if get_p("k_t")=="1" else False)
+    chk_token = c_k1.checkbox("感應磁扣(卡)", value=True if get_p("k_t") == "1" else False)
     num_token = c_k2.text_input("感應磁扣數量", value=get_p("kn_t", "1"))
-    chk_key_mail = c_k1.checkbox("信箱鑰匙", value=True if get_p("k_m")=="1" else False)
+    chk_key_mail = c_k1.checkbox("信箱鑰匙", value=True if get_p("k_m") == "1" else False)
     num_key_mail = c_k2.text_input("信箱鑰匙數量", value=get_p("kn_m", "1"))
-    chk_remote = c_k1.checkbox("車庫遙控器", value=True if get_p("k_r")=="1" else False)
+    chk_remote = c_k1.checkbox("車庫遙控器", value=True if get_p("k_r") == "1" else False)
     num_remote = c_k2.text_input("車庫遙控器數量", value=get_p("kn_r", "1"))
 
     st.write("---")
     canvas_l = st_canvas(fill_color="rgba(255,255,255,0)", stroke_width=3, stroke_color="#000000", background_color="#FFFFFF", height=100, width=280, drawing_mode="freedraw", key="canvas_l", return_image_data=True)
     st.markdown("**✒️ 出租人(房東)手寫簽名**")
-    
+
     canvas_t = st_canvas(fill_color="rgba(255,255,255,0)", stroke_width=3, stroke_color="#000000", background_color="#FFFFFF", height=100, width=280, drawing_mode="freedraw", key="canvas_t", return_image_data=True)
     st.markdown("**✒️ 承租人(房客)手寫簽名**")
 # ==================== 底部功能按鈕區 ====================
@@ -150,11 +150,11 @@ st.write("---")
 b_col1, b_col2 = st.columns(2)
 
 with b_col1:
-    st.subheader("【房東步驟 1】：產生全資料同步網址")
+    st.subheader("【房東步驟 1】:產生全資料同步網址")
     if st.button("🔗 一鍵生成房客簽名連結", use_container_width=True):
         if canvas_l.image_data is not None and canvas_l.image_data.any():
             Image.fromarray(canvas_l.image_data.astype('uint8'), 'RGBA').save("landlord_last_sign.png")
-            
+
         # 大打包所有資料欄位
         payload = {
             "l_name": landlord_name, "t_name": tenant_name, "t_id": tenant_id, "t_phone": tenant_phone,
@@ -171,25 +171,29 @@ with b_col1:
         for k, (is_chk, num) in fur_context.items():
             payload[f"f_{k}"] = "1" if is_chk else "0"
             payload[f"fn_{k}"] = num
-            
+
         # 進行 zlib 二進位高級安全壓縮
         raw_query_str = urllib.parse.urlencode(payload)
         compressed_bytes = zlib.compress(raw_query_str.encode("utf-8"))
         safe_b64_str = base64.urlsafe_b64encode(compressed_bytes).decode("utf-8")
-        
-        # 【終極修復校正】：一字不差固定拼裝公式，100% 絕不重疊黏貼，且內建標準半形問號 `?p=`
-        share_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app/{safe_b64_str}"
-        
-        st.success("🎉 全資料同步網址生成成功！請點擊下方代碼框右上角的『Copy』一鍵複製傳給房客（傳 Line 100% 免登入、全欄位自動打勾帶入）：")
+
+        # 【真正修復】:壓縮碼必須放在 "?p=" 這個查詢參數裡面,
+        # 才能被 st.query_params["p"] 讀到;直接接在網域後面當路徑是讀不到的。
+        # 另外用 urllib.parse.quote 再做一次編碼,避免 base64 結尾的 "=" 補齊符號被瀏覽器或
+        # Line 截斷或誤判。
+        safe_b64_str_encoded = urllib.parse.quote(safe_b64_str, safe="")
+        share_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app/?p={safe_b64_str_encoded}"
+
+        st.success("🎉 全資料同步網址生成成功!請點擊下方代碼框右上角的『Copy』一鍵複製傳給房客(傳 Line 100% 免登入、全欄位自動打勾帶入):")
         st.code(share_url, language="text")
 
 with b_col2:
-    st.subheader("【房客與房東步驟 2】：雙方簽完名後生成下載")
+    st.subheader("【房客與房東步驟 2】:雙方簽完名後生成下載")
     if st.button("🚀 線上生成合約文件", use_container_width=True):
         if not landlord_name or not tenant_name or not address:
-            st.error("❌ 錯誤：『出租人』、『承租人姓名』與『租賃房屋地址』為必填欄位！")
+            st.error("❌ 錯誤:『出租人』、『承租人姓名』與『租賃房屋地址』為必填欄位!")
         else:
-            with st.spinner("系統正在處理資料，請稍候..."):
+            with st.spinner("系統正在處理資料,請稍候..."):
                 try:
                     context = {
                         "landlord_name": landlord_name, "tenant_name": tenant_name, "tenant_id": tenant_id,
@@ -202,9 +206,16 @@ with b_col2:
                         "chk_mgmt_landlord": "■" if mgmt_pay == "出租人負擔" else "□", "chk_mgmt_tenant": "■" if mgmt_pay == "承租人負擔" else "□",
                         "chk_mgmt_other": "■" if mgmt_pay == "其他約定" else "□", "fee_mgmt_house": fee_mgmt_house, "fee_mgmt_car": fee_mgmt_car, "txt_mgmt_other": txt_mgmt_other,
                         "chk_water_landlord": "■" if water_pay == "出租人負擔" else "□", "chk_water_tenant": "■" if water_pay == "承租人負擔" else "□", "chk_water_other": "■" if water_pay == "其他約定" else "□", "txt_water_other": txt_water_other,
-                        "chk_elec_landlord": "■" if elec_pay == "出租人負擔" else "□", "chk_elec_tenant_avg": "■" if elec_pay == "承租人負擔 (依當期平均電價)" else "□", "chk_elec_tenant_fixed": "■" if elec_pay == "承租人負擔 (固定每度元)" else "□", "chk_elec_other": "■" if elec_pay == "非以度數計費其他約定" else "□", "fee_elec_rate": fee_elec_rate, "txt_elec_other": txt_elec_other,
+                        "chk_elec_landlord": "■" if elec_pay == "出租人負擔" else "□", "chk_elec_tenant_avg": "■" if elec_pay == "承租人負擔 (依當期平均電價)" else "□", "chk_elec_tenant_fixed": "■" if elec_pay == "承租人負擔 (固定每度元)" else "□",
+                        # 【修復】:原本比對字串多打一個「以」字("非以度數計費其他約定"),
+                        # 跟 elec_list 裡真正的選項"非度數計費其他約定"對不起來,導致永遠打不了勾。
+                        "chk_elec_other": "■" if elec_pay == "非度數計費其他約定" else "□",
+                        "fee_elec_rate": fee_elec_rate, "txt_elec_other": txt_elec_other,
                         "chk_gas_landlord": "■" if gas_pay == "出租人負擔" else "□", "chk_gas_tenant": "■" if gas_pay == "承租人負擔" else "□", "chk_gas_other": "■" if gas_pay == "其他約定" else "□", "txt_gas_other": txt_gas_other,
-                        "chk_net_landlord": "■" if net_pay == "出租人負擔" else "□", "chk_net_tenant": "■" if net_pay == "承租人負擔" else "□", "chk_net_other": "■" if net_pay == "其他約定" else "□", "txt_net_other": net_pay if 'net_pay' in locals() else txt_net_other,
+                        "chk_net_landlord": "■" if net_pay == "出租人負擔" else "□", "chk_net_tenant": "■" if net_pay == "承租人負擔" else "□", "chk_net_other": "■" if net_pay == "其他約定" else "□",
+                        # 【修復】:原本這裡的條件式永遠成立,存進去的是付費方案文字(net_pay),
+                        # 而不是使用者實際輸入的其他說明(txt_net_other)。
+                        "txt_net_other": txt_net_other,
                         "txt_other_fee": txt_other_fee,
                         "chk_key_house": "■" if chk_key_house else "□", "num_key_house": num_key_house if chk_key_house else "",
                         "chk_token": "■" if chk_token else "□", "num_token": num_token if chk_token else "",
@@ -218,10 +229,10 @@ with b_col2:
                     context["textarea_other"] = textarea_other if chk_other_f else ""
 
                     if not os.path.exists("template.docx"):
-                        st.error("找不到 template.docx 檔案！")
+                        st.error("找不到 template.docx 檔案!")
                     else:
                         doc = DocxTemplate("template.docx")
-                        
+
                         # 雲端背景雙簽名智慧合體
                         if canvas_l.image_data is not None and canvas_l.image_data.any():
                             Image.fromarray(canvas_l.image_data.astype('uint8'), 'RGBA').save("wl.png")
@@ -230,7 +241,7 @@ with b_col2:
                             context["landlord_sign"] = InlineImage(doc, "landlord_last_sign.png", width=Inches(1.2))
                         else:
                             context["landlord_sign"] = ""
-                            
+
                         if canvas_t.image_data is not None and canvas_t.image_data.any():
                             Image.fromarray(canvas_t.image_data.astype('uint8'), 'RGBA').save("wt.png")
                             context["tenant_sign"] = InlineImage(doc, "wt.png", width=Inches(1.2))
@@ -241,12 +252,12 @@ with b_col2:
                         out_word = f"住宅租賃契約書_{tenant_name}_{time_str}.docx"
                         doc.render(context)
                         doc.save(out_word)
-                        
+
                         if os.path.exists("wl.png"): os.remove("wl.png")
                         if os.path.exists("wt.png"): os.remove("wt.png")
 
-                        st.success("🎉 線上合約已成功產出！請點擊下載您的合約檔案：")
+                        st.success("🎉 線上合約已成功產出!請點擊下載您的合約檔案:")
                         with open(out_word, "rb") as wf:
                             st.download_button(label="📥 下載最終雙方簽署合約 Word 檔案 (.docx)", data=wf, file_name=f"住宅租賃契約書_{tenant_name}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
                 except Exception as e:
-                    st.error(f"生成失敗，原因：{str(e)}")
+                    st.error(f"生成失敗,原因:{str(e)}")

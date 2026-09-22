@@ -98,7 +98,7 @@ with col2:
     elec_idx = elec_list.index(get_p("e_p")) if get_p("e_p") in elec_list else 1
     elec_pay = st.radio("電費計費方式", elec_list, index=elec_idx, key="elec")
     fee_elec_rate = st.text_input("固定每度電費 (元)", value=get_p("e_r", "0"))
-    txt_elec_other = st.text_input("電費other約定說明", value=get_p("e_o"))
+    txt_elec_other = st.text_input("電費其他約定說明", value=get_p("e_o"))
 
     gas_list = ["出租人負擔", "承租人負擔", "其他約定"]
     gas_idx = gas_list.index(get_p("g_p")) if get_p("g_p") in gas_list else 1

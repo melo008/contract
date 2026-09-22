@@ -174,7 +174,7 @@ with b_col1:
             
         encoded_params = urllib.parse.urlencode(params)
         # 綁定您的免費前端網址
-        share_url = f"https://streamlit.app?{encoded_params}"
+        share_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app/?{encoded_params}"
         st.info("請複製下方網址，用 Line 或簡訊傳給房客，房客打開就能直接看到您的簽名並補簽（完全免註冊）：")
         st.code(share_url, language="text")
 

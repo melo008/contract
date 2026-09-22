@@ -183,7 +183,7 @@ with b_col1:
             
         encoded_params = urllib.parse.urlencode(params)
         # 固定綁定您的全螢幕免登入前端網址
-        raw_long_url = f"https://streamlit.app?{encoded_params}"
+        raw_long_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app?{encoded_params}"
         
         # ⚡ 自動將長亂碼網址丟去 TinyURL 縮短，生成乾淨的短連結
         with st.spinner("正在為您進行全自動網址優化與縮短..."):

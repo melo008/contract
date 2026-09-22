@@ -168,7 +168,7 @@ with b_col1:
         st.info("請複製下方網址，用 Line 或簡訊傳給房客，房客打開就能直接簽名（完全免註冊、免登入）：")
         st.code(share_url, language="text")
 
-)
+
 
 with b_col2:
     st.subheader("雙方簽完名後生成下載")

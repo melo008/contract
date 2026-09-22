@@ -182,15 +182,17 @@ with b_col1:
             params[f"fn_{k}"] = num
             
         encoded_params = urllib.parse.urlencode(params)
-        # 固定綁定您的全螢幕免登入前端網址
+        
+        # 【終極精準綁定】：直接使用你提供給我的前端免登入獨立網址，絕對不再拼錯！
         raw_long_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app?{encoded_params}"
         
-        # ⚡ 自動將長亂碼網址丟去 TinyURL 縮短，生成乾淨的短連結
-        with st.spinner("正在為您進行全自動網址優化與縮短..."):
+        # 自動將完整無誤的長網址丟去 TinyURL 縮短
+        with st.spinner("正在為您進行網址精準優化與全自動縮短..."):
             short_url = get_short_url(raw_long_url)
             
         st.success("🎉 短網址生成成功！傳給房客點開即可直接補簽（房客完全免登入、免註冊）：")
         st.code(short_url, language="text")
+
 
 with b_col2:
     st.subheader("【房客與房東步驟 2】：雙方簽完名後生成下載")

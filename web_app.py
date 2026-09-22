@@ -140,7 +140,7 @@ with b_col1:
             "rent": rent_amount
         }
         encoded_params = urllib.parse.urlencode(params)
-        raw_long_url = f"https://streamlit.app?{encoded_params}"
+        raw_long_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app/{encoded_params}"
         
         with st.spinner("正在為您進行網址精簡縮短..."):
             short_url = get_short_url(raw_long_url)

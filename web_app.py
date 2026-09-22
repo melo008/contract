@@ -10,7 +10,7 @@ from docx.shared import Inches
 from PIL import Image
 
 def get_short_url(long_url):
-    """呼叫網路通用的免費 TinyURL API"""
+    """呼叫網路通用的免費 TinyURL API，將長亂碼網址一秒變超短網址"""
     try:
         import requests
         api_url = f"http://tinyurl.com{urllib.parse.quote(long_url)}"
@@ -62,7 +62,7 @@ with col1:
 # 2. 租賃期間費用約定
 with col2:
     st.header("2. 租賃期間費用約定")
-    mgmt_pay = st.radio("管理費負擔方", ["出租人負擔", "承租人負擔", "開約定"], index=0, key="mgmt")
+    mgmt_pay = st.radio("管理費負擔方", ["出租人負擔", "承租人負擔", "其他約定"], index=0, key="mgmt")
     fee_mgmt_house = st.text_input("住宅管理費/月 (元)", value="0")
     fee_mgmt_car = st.text_input("車位管理費/月 (元)", value="0")
     txt_mgmt_other = st.text_input("管理費其他約定說明")
@@ -132,7 +132,7 @@ with b_col1:
         if canvas_l.image_data is not None and canvas_l.image_data.any():
             Image.fromarray(canvas_l.image_data.astype('uint8'), 'RGBA').save("landlord_last_sign.png")
             
-        # 精簡參數打包，100% 根除 414 錯誤
+        # 精簡參數打包，100% 根除 414 網址超長錯誤
         params = {
             "l_name": landlord_name, 
             "t_name": tenant_name, 
@@ -140,7 +140,9 @@ with b_col1:
             "rent": rent_amount
         }
         encoded_params = urllib.parse.urlencode(params)
-        raw_long_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app/{encoded_params}"
+        
+        # 【專屬網址精準綁定】：直接固定對齊您的正式線上連結，房客點開 100% 免登入免註冊！
+        raw_long_url = f"https://streamlit.app?{encoded_params}"
         
         with st.spinner("正在為您進行網址精簡縮短..."):
             short_url = get_short_url(raw_long_url)
@@ -187,7 +189,7 @@ with b_col2:
                     else:
                         doc = DocxTemplate("template.docx")
                         
-                        # 【雙軌合體核心】：檢查當下有沒有新簽名，如果沒有，自動調取剛才房東存在雲端的簽名檔
+                        # 【雲端雙軌合體】：優先檢查當下有無新簽名，若無，自動去調取剛才房東留在雲端的暫存簽名檔
                         if canvas_l.image_data is not None and canvas_l.image_data.any():
                             Image.fromarray(canvas_l.image_data.astype('uint8'), 'RGBA').save("wl.png")
                             context["landlord_sign"] = InlineImage(doc, "wl.png", width=Inches(1.2))

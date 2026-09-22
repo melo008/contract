@@ -8,7 +8,7 @@ from docx.shared import Inches
 from PIL import Image
 
 def get_short_url(long_url):
-    """呼叫微軟與網路通用的免費 TinyURL API"""
+    """呼叫網路通用的免費 TinyURL API"""
     try:
         import requests
         api_url = f"http://tinyurl.com{urllib.parse.quote(long_url)}"
@@ -70,7 +70,7 @@ with col2:
     
     elec_pay = st.radio("電費計費方式", ["出租人負擔", "承租人負擔 (依當期平均電價)", "承租人負擔 (固定每度元)", "非度數計費其他約定"], index=1, key="elec")
     fee_elec_rate = st.text_input("固定每度電費 (元)", value="0")
-    txt_elec_other = st.text_input("電費其他約定說明")
+    txt_elec_other = st.text_input("電費other約定說明")
     
     gas_pay = st.radio("瓦斯費負擔方", ["出租人負擔", "承租人負擔", "其他約定"], index=1, key="gas")
     txt_gas_other = st.text_input("瓦斯費其他約定說明")
@@ -126,7 +126,7 @@ b_col1, b_col2 = st.columns(2)
 with b_col1:
     st.subheader("【房東步驟 1】：產生專屬短網址")
     if st.button("🔗 一鍵生成房客簽名連結", use_container_width=True):
-        # 【極致精簡優化】：只將最容易打錯的 4 大核心欄位帶入網址，縮短網址長度，100% 避免 414 錯誤
+        # 進行參數精簡，100% 根除網頁 414 報錯
         params = {
             "l_name": landlord_name, 
             "t_name": tenant_name, 
@@ -134,7 +134,9 @@ with b_col1:
             "rent": rent_amount
         }
         encoded_params = urllib.parse.urlencode(params)
-        raw_long_url = f"https://streamlit.app?{encoded_params}"
+        
+        # 【核心修正】：精準使用您所提供的正式線上網址，保證絕不拼錯！
+        raw_long_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app/?{encoded_params}"
         
         with st.spinner("正在為您進行網址精簡縮短..."):
             short_url = get_short_url(raw_long_url)

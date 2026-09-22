@@ -1,23 +1,22 @@
-
 import os
 import urllib.parse
+import io
+import base64
 import streamlit as st
 from streamlit_drawable_canvas import st_canvas
 from datetime import datetime
 from docxtpl import DocxTemplate, InlineImage
 from docx.shared import Inches
-
 from PIL import Image
 
 # 網頁基本設定
 st.set_page_config(page_title="內政部租賃合約線上簽署系統", layout="wide")
-st.title(" 住宅租賃契約書 - 線上合約簽署系統")
-st.write("【房東專區】：填完資料後可於底部產生『專屬簽名連結』傳給房客；【房客專區】：核對資料後，於右側手寫簽名即可。")
+st.title("🏠 住宅租賃契約書 - 線上合約簽署系統")
+st.write("【房東專區】：填完資料並手寫簽名後，點擊底部產生『包含房東簽名』的專屬連結傳給房客。")
 
-# 讀取網址上的參數（如果是房客點開連結，會自動帶入資料）
+# 讀取網址上的參數
 query_params = st.query_params
 
-# 輔助函式：讀取網址參數
 def get_param(key, default=""):
     return query_params.get(key, default)
 
@@ -86,7 +85,7 @@ with col2:
     
     txt_other_fee = st.text_input("請輸入其他費用說明", value=get_param("oth_f"))
 
-# 3. 設備清單、點收物品與手寫簽名板設定
+# 3. 設備清單、點收物品與手寫簽名
 with col3:
     st.header("3. 附屬設備、點收與簽名")
     
@@ -97,7 +96,7 @@ with col3:
         ("sink", "洗手台"), ("shower", "蓮蓬頭")
     ]
     
-    st.markdown("** 附屬設備清單**")
+    st.markdown("**🏢 附屬設備清單**")
     fur_context = {}
     with st.expander("點擊展開常見家具清單"):
         for key, name in furniture_items:
@@ -111,7 +110,7 @@ with col3:
     textarea_other = st.text_area("請輸入自訂家具備註", value=get_param("f_txt"), height=60)
 
     st.write("---")
-    st.markdown("** 承租人點收物品**")
+    st.markdown("**🔑 承租人點收物品**")
     c_k1, c_k2 = st.columns(2)
     chk_key_house = c_k1.checkbox("房屋鑰匙", value=True if get_param("k_h")=="1" else False)
     num_key_house = c_k2.text_input("房屋鑰匙數量", value=get_param("kn_h", "1"))
@@ -128,21 +127,34 @@ with col3:
     chk_remote = c_k7.checkbox("車庫遙控器", value=True if get_param("k_r")=="1" else False)
     num_remote = c_k8.text_input("車庫遙控器數量", value=get_param("kn_r", "1"))
 
+    # 智慧重載房東先前簽好的圖片（如有）
+    l_sign_b64 = get_param("l_sign")
+    
     st.write("---")
-    st.markdown("** 出租人手寫簽名**")
+    st.markdown("**✒️ 出租人手寫簽名**")
+    if l_sign_b64:
+        st.success("已載入房東預先留下的簽名！(若需修改可直接於下方重新簽名)")
+        
     canvas_l = st_canvas(fill_color="rgba(255,255,255,0)", stroke_width=3, stroke_color="#000000", background_color="#FFFFFF", height=100, width=280, drawing_mode="freedraw", key="canvas_l", return_image_data=True)
     
-    st.markdown("** 承租人手寫簽名**")
+    st.markdown("**✒️ 承租人手寫簽名**")
     canvas_t = st_canvas(fill_color="rgba(255,255,255,0)", stroke_width=3, stroke_color="#000000", background_color="#FFFFFF", height=100, width=280, drawing_mode="freedraw", key="canvas_t", return_image_data=True)
-
 # ==================== 底部功能按鈕區 ====================
 st.write("---")
 b_col1, b_col2 = st.columns(2)
 
 with b_col1:
-    st.subheader("產生專屬簽名網址")
-    if st.button(" 一鍵生成房客簽名連結", use_container_width=True):
-        # 將畫面上填好的資料加密編碼進網址中
+    st.subheader("【房東步驟 1】：產生包含您簽名的網址")
+    if st.button("🔗 一鍵生成房客簽名連結", use_container_width=True):
+        # 先將房東的簽名轉換成 Base64 輕量字串包進網址
+        l_sign_encoded = l_sign_b64  # 預設沿用舊的
+        if canvas_l.image_data is not None and canvas_l.image_data.any():
+            # 使用者有當場簽名，進行壓縮編碼
+            img_l_obj = Image.fromarray(canvas_l.image_data.astype('uint8'), 'RGBA')
+            buffered = io.BytesIO()
+            img_l_obj.save(buffered, format="PNG")
+            l_sign_encoded = base64.b64encode(buffered.getvalue()).decode("utf-8")
+
         params = {
             "l_name": landlord_name, "t_name": tenant_name, "t_id": tenant_id, "t_phone": tenant_phone,
             "t_addr": tenant_address, "addr": address, "rent": rent_amount, "dep": deposit_amount,
@@ -153,28 +165,24 @@ with b_col1:
             "g_p": gas_pay, "g_o": txt_gas_other, "n_p": net_pay, "n_o": txt_net_other, "oth_f": txt_other_fee,
             "k_h": "1" if chk_key_house else "0", "kn_h": num_key_house, "k_t": "1" if chk_token else "0", "kn_t": num_token,
             "k_m": "1" if chk_key_mail else "0", "kn_m": num_key_mail, "k_r": "1" if chk_remote else "0", "kn_r": num_remote,
-            "f_oth": "1" if chk_other_f else "0", "f_txt": textarea_other
+            "f_oth": "1" if chk_other_f else "0", "f_txt": textarea_other,
+            "l_sign": l_sign_encoded  # 房東的輕量化簽名封包
         }
         for k, (is_chk, num) in fur_context.items():
             params[f"f_{k}"] = "1" if is_chk else "0"
             params[f"fn_{k}"] = num
             
-                 # 串接目前的網頁基礎網址
         encoded_params = urllib.parse.urlencode(params)
-        
-        # 【精準填入你的專屬網址】：直接綁定你的前端免登入網址，防客點開100%免註冊免登入
-        share_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app/?{encoded_params}"
-        
-        st.info("請複製下方網址，用 Line 或簡訊傳給房客，房客打開就能直接簽名（完全免註冊、免登入）：")
+        # 綁定您的免費前端網址
+        share_url = f"https://streamlit.app?{encoded_params}"
+        st.info("請複製下方網址，用 Line 或簡訊傳給房客，房客打開就能直接看到您的簽名並補簽（完全免註冊）：")
         st.code(share_url, language="text")
 
-
-
 with b_col2:
-    st.subheader("雙方簽完名後生成下載")
-    if st.button("線上生成合約文件", use_container_width=True):
+    st.subheader("【房客與房東步驟 2】：雙方簽完名後生成下載")
+    if st.button("🚀 線上生成合約文件", use_container_width=True):
         if not landlord_name or not tenant_name or not address:
-            st.error(" 錯誤：『出租人』、『承租人姓名』與『租賃房屋地址』為必填欄位！")
+            st.error("❌ 錯誤：『出租人』、『承租人姓名』與『租賃房屋地址』為必填欄位！")
         else:
             with st.spinner("系統正在處理資料，請稍候..."):
                 try:
@@ -191,7 +199,7 @@ with b_col2:
                         "chk_water_landlord": "■" if water_pay == "出租人負擔" else "□", "chk_water_tenant": "■" if water_pay == "承租人負擔" else "□", "chk_water_other": "■" if water_pay == "其他約定" else "□", "txt_water_other": txt_water_other,
                         "chk_elec_landlord": "■" if elec_pay == "出租人負擔" else "□", "chk_elec_tenant_avg": "■" if elec_pay == "承租人負擔 (依當期平均電價)" else "□", "chk_elec_tenant_fixed": "■" if elec_pay == "承租人負擔 (固定每度元)" else "□", "chk_elec_other": "■" if elec_pay == "非以度數計費其他約定" else "□", "fee_elec_rate": fee_elec_rate, "txt_elec_other": txt_elec_other,
                         "chk_gas_landlord": "■" if gas_pay == "出租人負擔" else "□", "chk_gas_tenant": "■" if gas_pay == "承租人負擔" else "□", "chk_gas_other": "■" if gas_pay == "其他約定" else "□", "txt_gas_other": txt_gas_other,
-                        "chk_net_landlord": "■" if net_pay == "出租人負擔" else "□", "chk_net_tenant": "■" if net_pay == "承租人負擔" else "□", "chk_net_other": "■" if net_pay == "其他約定" else "□", "txt_net_other": txt_net_other,
+                        "chk_net_landlord": "■" if net_pay == "出租人負擔" else "□", "chk_net_tenant": "■" if net_pay == "承租人負擔" else "□", "chk_net_other": "■" if net_pay == "其他約定" else "□", "txt_net_other": net_pay if 'net_pay' in locals() else txt_net_other,
                         "txt_other_fee": txt_other_fee,
                         "chk_key_house": "■" if chk_key_house else "□", "num_key_house": num_key_house if chk_key_house else "",
                         "chk_token": "■" if chk_token else "□", "num_token": num_token if chk_token else "",
@@ -208,36 +216,42 @@ with b_col2:
                         st.error("找不到 template.docx 檔案！")
                     else:
                         doc = DocxTemplate("template.docx")
-                        if canvas_l.image_data is not None:
+                        
+                        # 處理出租人（房東）簽名：優先檢查網址裡有沒有帶入先前簽好的圖檔
+                        if canvas_l.image_data is not None and canvas_l.image_data.any():
                             Image.fromarray(canvas_l.image_data.astype('uint8'), 'RGBA').save("wl.png")
                             context["landlord_sign"] = InlineImage(doc, "wl.png", width=Inches(1.2))
-                        else: context["landlord_sign"] = ""
-                        if canvas_t.image_data is not None:
+                        elif l_sign_b64:
+                            img_l_bytes = base64.b64decode(l_sign_b64)
+                            Image.open(io.BytesIO(img_l_bytes)).save("wl.png")
+                            context["landlord_sign"] = InlineImage(doc, "wl.png", width=Inches(1.2))
+                        else:
+                            context["landlord_sign"] = ""
+                            
+                        # 處理承租人（房客）簽名
+                        if canvas_t.image_data is not None and canvas_t.image_data.any():
                             Image.fromarray(canvas_t.image_data.astype('uint8'), 'RGBA').save("wt.png")
                             context["tenant_sign"] = InlineImage(doc, "wt.png", width=Inches(1.2))
-                        else: context["tenant_sign"] = ""
+                        else:
+                            context["tenant_sign"] = ""
 
-                                           # 渲染並儲存 Word 檔
-                    time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    out_word = f"線上合約_{tenant_name}_{time_str}.docx"
-                    doc.render(context)
-                    doc.save(out_word)
-                    
-                    # 清理簽名暫存圖
-                    if os.path.exists("wl.png"): os.remove("wl.png")
-                    if os.path.exists("wt.png"): os.remove("wt.png")
+                        time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        out_word = f"住宅租賃契約書_{tenant_name}_{time_str}.docx"
+                        
+                        doc.render(context)
+                        doc.save(out_word)
+                        
+                        if os.path.exists("wl.png"): os.remove("wl.png")
+                        if os.path.exists("wt.png"): os.remove("wt.png")
 
-                    st.success("🎉 線上合約已成功產出！請點擊下方按鈕下載：")
-                    
-                    # 雲端版專用：提供完美包含手寫簽名與小數點的 Word 下載按鈕
-                    with open(out_word, "rb") as word_file:
-                        st.download_button(
-                            label=" 下載最終合約 Word 檔案 (.docx)",
-                            data=word_file,
-                            file_name=f"住宅租賃契約書_{tenant_name}.docx",
-                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                            use_container_width=True
-                        )
+                        st.success("🎉 線上合約已成功產出！請點擊下載您的合約檔案：")
+                        with open(out_word, "rb") as wf:
+                            st.download_button(
+                                label="📥 下載最終雙方簽署合約 Word 檔案 (.docx)", 
+                                data=wf, 
+                                file_name=f"住宅租賃契約書_{tenant_name}.docx", 
+                                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+                                use_container_width=True
+                            )
                 except Exception as e:
                     st.error(f"生成失敗，原因：{str(e)}")
-

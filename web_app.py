@@ -212,26 +212,27 @@ with b_col2:
                             context["tenant_sign"] = InlineImage(doc, "wt.png", width=Inches(1.2))
                         else: context["tenant_sign"] = ""
 
-                        time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-                        out_word = f"線上合約_{tenant_name}_{time_str}.docx"
-                        out_pdf = out_word.replace(".docx", ".pdf")
-                        doc.render(context)
-                        doc.save(out_word)
-                        
-                        pythoncom.CoInitialize()
-                        convert(out_word, out_pdf)
-                        pythoncom.CoUninitialize()
-                        
-                        if os.path.exists("wl.png"): os.remove("wl.png")
-                        if os.path.exists("wt.png"): os.remove("wt.png")
+                                           # 渲染並儲存 Word 檔
+                    time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    out_word = f"線上合約_{tenant_name}_{time_str}.docx"
+                    doc.render(context)
+                    doc.save(out_word)
+                    
+                    # 清理簽名暫存圖
+                    if os.path.exists("wl.png"): os.remove("wl.png")
+                    if os.path.exists("wt.png"): os.remove("wt.png")
 
-                        st.success(" 線上合約已成功產出！請選擇格式下載：")
-                        d_col1, d_col2 = st.columns(2)
-                        with d_col1:
-                            with open(out_word, "rb") as wf:
-                                st.download_button(label="下載 Word 檔案 (.docx)", data=wf, file_name=f"住宅租賃契約書_{tenant_name}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
-                        with d_col2:
-                            with open(out_pdf, "rb") as pf:
-                                st.download_button(label=" 下載 PDF 檔案 (.pdf)", data=pf, file_name=f"住宅租賃契約書_{tenant_name}.pdf", mime="application/pdf", use_container_width=True)
+                    st.success("🎉 線上合約已成功產出！請點擊下方按鈕下載：")
+                    
+                    # 雲端版專用：提供完美包含手寫簽名與小數點的 Word 下載按鈕
+                    with open(out_word, "rb") as word_file:
+                        st.download_button(
+                            label=" 下載最終合約 Word 檔案 (.docx)",
+                            data=word_file,
+                            file_name=f"住宅租賃契約書_{tenant_name}.docx",
+                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                            use_container_width=True
+                        )
                 except Exception as e:
                     st.error(f"生成失敗，原因：{str(e)}")
+

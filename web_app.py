@@ -180,7 +180,7 @@ with b_col1:
         safe_b64_str = base64.urlsafe_b64encode(compressed_bytes).decode("utf-8")
         
         # 綁定您的免費前端專屬網址
-        share_url = f"https://streamlit.app{safe_b64_str}"
+        share_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app/{safe_b64_str}"
         
         st.success("🎉 全資料同步網址優化成功！請複製下方代碼方塊內的網址傳給房客：")
         st.code(share_url, language="text")

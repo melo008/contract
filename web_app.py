@@ -12,7 +12,7 @@ from PIL import Image
 
 # 網頁基本設定
 st.set_page_config(page_title="內政部租賃合約線上簽署系統", layout="wide")
-st.title("🏠 住宅租賃契約書 - 線上合約簽署系統")
+st.title(" 住宅租賃契約書 - 線上合約簽署系統")
 
 # 17 種固定家具設備清單
 FURNITURE_ITEMS = [
@@ -202,7 +202,7 @@ with col3:
     textarea_other = st.text_area("請輸入自訂家具備註", value=get_p("f_txt"), height=60, disabled=is_tenant_view)
 
     st.write("---")
-    st.markdown("**🔑 承租人點收物品**")
+    st.markdown("** 承租人點收物品**")
     c_k1, c_k2 = st.columns(2)
     chk_key_house = c_k1.checkbox("房屋鑰匙", value=True if get_p("k_h") == "1" else False, disabled=is_tenant_view)
     num_key_house = c_k2.text_input("房屋鑰匙數量", value=get_p("kn_h", "1"), disabled=is_tenant_view)
@@ -226,7 +226,7 @@ with col3:
         canvas_l = st_canvas(fill_color="rgba(255,255,255,0)", stroke_width=3, stroke_color="#000000", background_color="#FFFFFF", height=100, width=280, drawing_mode="freedraw", key="canvas_l", return_image_data=True)
 
     # 【新增】出租人印鑑:緊接在房東簽名後面,讓房東可以掃描/拍照上傳印鑑圖片,一起附加到合約裡。
-    st.markdown("**🖋️ 出租人印鑑(可選,掃描或拍照上傳)**")
+    st.markdown("** 出租人印鑑(可選,掃描或拍照上傳)**")
     if is_tenant_view:
         landlord_seal_file = None
         if os.path.exists(seal_path(contract_id)):
@@ -236,7 +236,7 @@ with col3:
     else:
         landlord_seal_file = st.file_uploader("上傳印鑑圖片 (png/jpg)", type=["png", "jpg", "jpeg"], key="landlord_seal_upload")
 
-    st.markdown("**✒️ 承租人(房客)手寫簽名**")
+    st.markdown("** 承租人(房客)手寫簽名**")
     canvas_t = st_canvas(fill_color="rgba(255,255,255,0)", stroke_width=3, stroke_color="#000000", background_color="#FFFFFF", height=100, width=280, drawing_mode="freedraw", key="canvas_t", return_image_data=True)
 # ==================== 底部功能按鈕區 ====================
 st.write("---")
@@ -247,7 +247,7 @@ with b_col1:
     if is_tenant_view:
         st.caption("此區僅供房東使用,房客檢視模式下已隱藏,以避免資料被覆蓋。")
     else:
-        if st.button("🔗 一鍵生成房客簽名連結", use_container_width=True):
+        if st.button(" 一鍵生成房客簽名連結", use_container_width=True):
             # 每次生成連結都給一組新的短 ID,資料、房東簽名、房東印鑑都分開存成這組 ID 專屬的檔案,
             # 不同筆合約之間不會互相覆蓋(舊版做法是全部共用同一個檔名,多筆合約同時進行時會互相蓋掉)。
             new_id = secrets.token_urlsafe(6)
@@ -282,7 +282,7 @@ with b_col1:
             # 【短網址】:網址只帶這組短 ID,不再把整包資料塞進網址,徹底解決網址過長 / 414 的問題。
             share_url = f"https://gxbnexkrg8ixs4pe8s4ywh.streamlit.app/?p={new_id}"
 
-            st.success("🎉 全資料同步網址生成成功!請點擊下方代碼框右上角的『Copy』一鍵複製傳給房客(傳 Line 100% 免登入、全欄位自動打勾帶入):")
+            st.success(" 全資料同步網址生成成功!請點擊下方代碼框右上角的『Copy』一鍵複製傳給房客(傳 Line 100% 免登入、全欄位自動打勾帶入):")
             st.code(share_url, language="text")
 
 with b_col2:
@@ -291,10 +291,10 @@ with b_col2:
         btn_label = "✅ 確認無誤,完成簽署並產生合約"
     else:
         st.subheader("【房客與房東步驟 2】:雙方簽完名後生成下載")
-        btn_label = "🚀 線上生成合約文件"
+        btn_label = " 線上生成合約文件"
     if st.button(btn_label, use_container_width=True):
         if not landlord_name or not tenant_name or not address:
-            st.error("❌ 錯誤:『出租人』、『承租人姓名』與『租賃房屋地址』為必填欄位!")
+            st.error(" 錯誤:『出租人』、『承租人姓名』與『租賃房屋地址』為必填欄位!")
         else:
             with st.spinner("系統正在處理資料,請稍候..."):
                 try:
@@ -369,9 +369,9 @@ with b_col2:
                         if os.path.exists("wt.png"): os.remove("wt.png")
                         if os.path.exists("wseal.png"): os.remove("wseal.png")
 
-                        st.success("🎉 線上合約已成功產出!請點擊下載您的合約檔案:")
+                        st.success(" 線上合約已成功產出!請點擊下載您的合約檔案:")
                         with open(out_word, "rb") as wf:
-                            st.download_button(label="📥 下載最終雙方簽署合約 Word 檔案 (.docx)", data=wf, file_name=f"住宅租賃契約書_{tenant_name}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
+                            st.download_button(label=" 下載最終雙方簽署合約 Word 檔案 (.docx)", data=wf, file_name=f"住宅租賃契約書_{tenant_name}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
 
                         # 簽署完成後,自動把合約寄一份到房東填寫的 Email(尚未設定 SMTP Secrets 時只會提示,不影響下載)。
                         if landlord_email:

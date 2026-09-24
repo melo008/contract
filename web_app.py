@@ -238,6 +238,11 @@ with col3:
 
     st.markdown("** 承租人(房客)手寫簽名**")
     canvas_t = st_canvas(fill_color="rgba(255,255,255,0)", stroke_width=3, stroke_color="#000000", background_color="#FFFFFF", height=100, width=280, drawing_mode="freedraw", key="canvas_t", return_image_data=True)
+
+    # 【新增】承租人印鑑:緊接在租客簽名後面,租客簽名的同一步驟就能順便上傳印鑑,不需要另外存檔案,
+    # 產生合約時當下直接讀進去即可。
+    st.markdown("** 承租人印鑑(可選,掃描或拍照上傳)**")
+    tenant_seal_file = st.file_uploader("上傳印鑑圖片 (png/jpg)", type=["png", "jpg", "jpeg"], key="tenant_seal_upload")
 # ==================== 底部功能按鈕區 ====================
 st.write("---")
 b_col1, b_col2 = st.columns(2)

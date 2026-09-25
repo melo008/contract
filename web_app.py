@@ -206,7 +206,7 @@ with col2:
 # 3. 設備清單、點收物品與手寫簽名
 with col3:
     st.header("3. 附屬設備、點收與簽名")
-    st.markdown("**🏢 附屬設備清單**")
+    st.markdown("** 附屬設備清單**")
     fur_context = {}
     with st.expander("點擊展開常見家具清單"):
         for key, name in FURNITURE_ITEMS:
